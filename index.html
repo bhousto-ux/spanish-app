@@ -18,7 +18,7 @@
   </style>
 </head>
 <body>
-<div id="root"><div style="display:flex;justify-content:center;align-items:center;height:100vh;font-size:24px;">⏳ Loading...</div></div>
+<div id="root"><div style="display:flex;flex-direction:column;justify-content:center;align-items:center;height:100vh;font-size:24px;gap:10px;"><div>⏳ Loading...</div><div style="font-size:14px;color:#666;">Compiling app...</div></div></div>
 <script type="text/babel">
 const { useState, useEffect, useCallback, useRef } = React;
 
@@ -7275,20 +7275,16 @@ const DEFAULT_APP_DATA = {
 
 const loadAppData = async () => {
   try {
-    const result = await window.storage.get('spanish-app-data-v2');
-    if (result && result.value) {
-      const data = JSON.parse(result.value);
-      // Migrate from old format if needed
-      if (!data.profiles) {
-        return DEFAULT_APP_DATA;
+    const result = localStorage.getItem('spanish-app-data-v2');
+    if (result) {
+      const data = JSON.parse(result);
+      if (data.profiles) {
+        return data;
       }
-      return data;
     }
-    // Try to migrate from old single-profile format
-    const oldResult = await window.storage.get('spanish-progress-v3');
-    if (oldResult && oldResult.value) {
-      const oldProgress = JSON.parse(oldResult.value);
-      // Create migrated data with old progress in slot 1
+    const oldResult = localStorage.getItem('spanish-progress-v3');
+    if (oldResult) {
+      const oldProgress = JSON.parse(oldResult);
       const migratedData = {
         ...DEFAULT_APP_DATA,
         currentProfileId: 1,
@@ -7307,18 +7303,18 @@ const loadAppData = async () => {
           4: null,
         },
       };
-      await saveAppData(migratedData);
+      saveAppData(migratedData);
       return migratedData;
     }
   } catch (e) {
-    console.log('No saved data found, starting fresh');
+    console.log('Storage error, starting fresh:', e);
   }
   return DEFAULT_APP_DATA;
 };
 
 const saveAppData = async (data) => {
   try {
-    await window.storage.set('spanish-app-data-v2', JSON.stringify(data));
+    localStorage.setItem('spanish-app-data-v2', JSON.stringify(data));
   } catch (e) {
     console.error('Failed to save data:', e);
   }
