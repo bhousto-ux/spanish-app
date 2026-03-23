@@ -8,27 +8,19 @@
   <meta name="apple-mobile-web-app-title" content="Spanish Fun">
   <title>Spanish Learning App</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.23.5/babel.min.js"></script>
   <style>
     body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
     html, body, #root { height: 100%; }
     #root { overflow: auto; }
-    .loading { display: flex; justify-content: center; align-items: center; height: 100vh; font-size: 24px; }
   </style>
 </head>
 <body>
-<div id="root"><div class="loading">⏳ Loading Spanish App...</div></div>
-<script>
-window.onerror = function(msg, url, line, col, error) {
-  document.getElementById('root').innerHTML = '<div style="padding:20px;color:red;"><h2>Error Loading App</h2><p>' + msg + '</p><p>Line: ' + line + '</p></div>';
-  return false;
-};
-</script>
-<script type="text/babel" data-presets="react">
+<div id="root"><div style="display:flex;justify-content:center;align-items:center;height:100vh;font-size:24px;">⏳ Loading...</div></div>
+<script type="text/babel">
 const { useState, useEffect, useCallback, useRef } = React;
-
 
 
 // ==================== DATA ====================
@@ -7283,9 +7275,9 @@ const DEFAULT_APP_DATA = {
 
 const loadAppData = async () => {
   try {
-    const result = localStorage.getItem('spanish-app-data-v2');
-    if (result) {
-      const data = JSON.parse(result);
+    const result = await window.storage.get('spanish-app-data-v2');
+    if (result && result.value) {
+      const data = JSON.parse(result.value);
       // Migrate from old format if needed
       if (!data.profiles) {
         return DEFAULT_APP_DATA;
@@ -7293,9 +7285,9 @@ const loadAppData = async () => {
       return data;
     }
     // Try to migrate from old single-profile format
-    const oldResult = localStorage.getItem('spanish-progress-v3');
-    if (oldResult) {
-      const oldProgress = JSON.parse(oldResult);
+    const oldResult = await window.storage.get('spanish-progress-v3');
+    if (oldResult && oldResult.value) {
+      const oldProgress = JSON.parse(oldResult.value);
       // Create migrated data with old progress in slot 1
       const migratedData = {
         ...DEFAULT_APP_DATA,
@@ -7326,7 +7318,7 @@ const loadAppData = async () => {
 
 const saveAppData = async (data) => {
   try {
-    localStorage.setItem('spanish-app-data-v2', JSON.stringify(data));
+    await window.storage.set('spanish-app-data-v2', JSON.stringify(data));
   } catch (e) {
     console.error('Failed to save data:', e);
   }
