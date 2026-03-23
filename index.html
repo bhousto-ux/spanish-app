@@ -8,9 +8,8 @@
   <meta name="apple-mobile-web-app-title" content="Spanish Fun">
   <title>Spanish Learning App</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-  <script src="https://unpkg.com/@babel/standalone@7.23.5/babel.min.js"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <style>
     body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
     html, body, #root { height: 100%; }
@@ -18,12 +17,10 @@
   </style>
 </head>
 <body>
-<div id="root"><div style="display:flex;flex-direction:column;justify-content:center;align-items:center;height:100vh;font-size:24px;gap:10px;"><div>⏳ Loading...</div><div style="font-size:14px;color:#666;">Compiling app...</div></div></div>
-<script type="text/babel">
-const { useState, useEffect, useCallback, useRef } = React;
+<div id="root"><div style="display:flex;flex-direction:column;justify-content:center;align-items:center;height:100vh;"><div style="font-size:48px;margin-bottom:20px;">🇪🇸</div><div style="font-size:24px;margin-bottom:10px;">Loading Spanish App...</div><div style="font-size:14px;color:#666;">Preparing 75 lessons...</div></div></div>
 
-
-// ==================== DATA ====================
+<script>
+// ========== DATA (Plain JS - no compilation needed) ==========
 const LESSONS = [
   {
     id: 'greetings-1',
@@ -7220,56 +7217,20 @@ const ENCOURAGEMENTS = [
   'Super star! ⭐', 'Way to go! 🎊', 'You rock! 🎸', 'Awesome! 😎'
 ];
 
-// Helper function to get vocabulary for review lessons
-const getReviewVocabulary = (lesson) => {
-  if (!lesson.isReview || !lesson.reviewUnits) {
-    return lesson.vocabulary;
-  }
-  
-  // Collect vocabulary from all reviewed units
-  const allVocab = [];
-  lesson.reviewUnits.forEach(unitId => {
-    const unit = LESSONS.find(l => l.id === unitId);
-    if (unit && unit.vocabulary) {
-      allVocab.push(...unit.vocabulary);
-    }
-  });
-  
-  return allVocab;
-};
-
-// Get a random subset of vocabulary for review exercises
-const getRandomReviewVocabulary = (lesson, count = 10) => {
-  const allVocab = getReviewVocabulary(lesson);
-  const shuffled = [...allVocab].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, Math.min(count, shuffled.length));
-};
-
-// ==================== STORAGE HELPERS ====================
-const PROFILE_AVATARS = ['🦊', '🐼', '🦁', '🐸', '🦋', '🐙', '🦄', '🐲', '🌟', '🚀', '🎨', '🎸'];
-const PROFILE_COLORS = ['purple', 'blue', 'green', 'pink'];
-
 const DEFAULT_PROFILE = {
   name: '',
   avatar: '🦊',
-  color: 'purple',
   totalXP: 0,
   lessonsCompleted: [],
-  lessonScores: {}, // { lessonId: { correct, total, percentage, stars, hearts, lastPlayed } }
+  lessonScores: {},
   currentStreak: 1,
   lastPlayedDate: null,
-  achievements: [],
   createdAt: null,
 };
 
 const DEFAULT_APP_DATA = {
   currentProfileId: null,
-  profiles: {
-    1: null,
-    2: null,
-    3: null,
-    4: null,
-  },
+  profiles: { 1: null, 2: null, 3: null, 4: null },
   version: 2,
 };
 
@@ -7278,47 +7239,22 @@ const loadAppData = async () => {
     const result = localStorage.getItem('spanish-app-data-v2');
     if (result) {
       const data = JSON.parse(result);
-      if (data.profiles) {
-        return data;
-      }
+      if (data.profiles) return data;
     }
-    const oldResult = localStorage.getItem('spanish-progress-v3');
-    if (oldResult) {
-      const oldProgress = JSON.parse(oldResult);
-      const migratedData = {
-        ...DEFAULT_APP_DATA,
-        currentProfileId: 1,
-        profiles: {
-          1: {
-            ...DEFAULT_PROFILE,
-            name: 'Player 1',
-            totalXP: oldProgress.totalXP || 0,
-            lessonsCompleted: oldProgress.lessonsCompleted || [],
-            currentStreak: oldProgress.currentStreak || 1,
-            lastPlayedDate: oldProgress.lastPlayedDate,
-            createdAt: new Date().toISOString(),
-          },
-          2: null,
-          3: null,
-          4: null,
-        },
-      };
-      saveAppData(migratedData);
-      return migratedData;
-    }
-  } catch (e) {
-    console.log('Storage error, starting fresh:', e);
-  }
+  } catch (e) { console.log('Storage error:', e); }
   return DEFAULT_APP_DATA;
 };
 
 const saveAppData = async (data) => {
   try {
     localStorage.setItem('spanish-app-data-v2', JSON.stringify(data));
-  } catch (e) {
-    console.error('Failed to save data:', e);
-  }
+  } catch (e) { console.error('Save error:', e); }
 };
+</script>
+
+<script src="https://unpkg.com/@babel/standalone@7.23.5/babel.min.js"></script>
+<script type="text/babel">
+const { useState, useEffect, useCallback, useRef } = React;
 
 // Calculate stars based on percentage
 const calculateStars = (percentage) => {
@@ -9786,7 +9722,7 @@ const LoadingScreen = () => (
 );
 
 // ==================== MAIN APP ====================
-export default function SpanishLearningApp() {
+function SpanishLearningApp() {
   const [screen, setScreen] = useState('loading');
   const [currentLesson, setCurrentLesson] = useState(null);
   const [hearts, setHearts] = useState(5);
