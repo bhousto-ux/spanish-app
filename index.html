@@ -7211,6 +7211,33 @@ const LESSONS = [
   },
 ];
 
+const REVIEW_REWARDS = {
+  'review-1': { emoji: '🌟', name: 'First Star', description: 'Completed your first review!', rarity: 'common' },
+  'review-2': { emoji: '🎯', name: 'Sharp Shooter', description: 'Mastered basics!', rarity: 'common' },
+  'review-3': { emoji: '🔥', name: 'On Fire', description: 'Actions and clothing expert!', rarity: 'common' },
+  'review-4': { emoji: '🌈', name: 'Rainbow Master', description: 'Weather and places pro!', rarity: 'common' },
+  'review-5': { emoji: '🏆', name: 'Level 1 Champion', description: 'Completed all of Level 1!', rarity: 'rare' },
+  'review-6': { emoji: '📚', name: 'Number Wizard', description: 'Count to 100 like a pro!', rarity: 'common' },
+  'review-7': { emoji: '🏠', name: 'Home Expert', description: 'School and house vocabulary master!', rarity: 'common' },
+  'review-8': { emoji: '🍎', name: 'Food Critic', description: 'Fruits, veggies, and drinks!', rarity: 'common' },
+  'review-9': { emoji: '🎭', name: 'Personality Pro', description: 'Adjectives and descriptions!', rarity: 'common' },
+  'review-10': { emoji: '📝', name: 'Grammar Guru', description: 'Pronouns and articles mastered!', rarity: 'rare' },
+  'review-11': { emoji: '⚽', name: 'Sports Star', description: 'Hobbies and nature expert!', rarity: 'common' },
+  'review-12': { emoji: '🎬', name: 'Verb Master', description: 'Ser, estar, tener, querer!', rarity: 'rare' },
+  'review-13': { emoji: '🚀', name: 'Action Hero', description: 'All verb conjugations!', rarity: 'rare' },
+  'review-14': { emoji: '🌍', name: 'World Traveler', description: 'Daily life vocabulary complete!', rarity: 'rare' },
+  'review-15': { emoji: '💬', name: 'Conversationalist', description: 'Real-life situations mastered!', rarity: 'epic' },
+  'review-16': { emoji: '⭐', name: 'Rising Star', description: 'Past tense and comparisons!', rarity: 'epic' },
+  'grand-finale': { emoji: '👑', name: 'Spanish Royalty', description: 'COMPLETED ALL 5 LEVELS!', rarity: 'legendary' },
+};
+
+const RARITY_COLORS = {
+  common: { bg: 'bg-gray-100', border: 'border-gray-300', text: 'text-gray-600', glow: '' },
+  rare: { bg: 'bg-blue-100', border: 'border-blue-400', text: 'text-blue-600', glow: 'shadow-blue-200' },
+  epic: { bg: 'bg-purple-100', border: 'border-purple-400', text: 'text-purple-600', glow: 'shadow-purple-300' },
+  legendary: { bg: 'bg-yellow-100', border: 'border-yellow-400', text: 'text-yellow-600', glow: 'shadow-yellow-300 shadow-lg animate-pulse' },
+};
+
 const ENCOURAGEMENTS = [
   '¡Excelente! 🌟', '¡Muy bien! 👏', '¡Fantástico! ✨', '¡Increíble! 🎉', 
   '¡Genial! 🚀', '¡Perfecto! 💯', 'You got it! 🙌', 'Amazing! 🌈',
@@ -7222,11 +7249,14 @@ const PROFILE_AVATARS = ['🦊', '🐼', '🦁', '🐸', '🦋', '🐙', '🦄',
 const DEFAULT_PROFILE = {
   name: '',
   avatar: '🦊',
+  color: 'purple',
   totalXP: 0,
   lessonsCompleted: [],
   lessonScores: {},
+  rewards: [],
   currentStreak: 1,
   lastPlayedDate: null,
+  achievements: [],
   createdAt: null,
 };
 
@@ -7251,6 +7281,26 @@ const saveAppData = async (data) => {
   try {
     localStorage.setItem('spanish-app-data-v2', JSON.stringify(data));
   } catch (e) { console.error('Save error:', e); }
+};
+
+const getReviewVocabulary = (lesson) => {
+  if (!lesson.isReview || !lesson.reviewUnits) {
+    return lesson.vocabulary;
+  }
+  const allVocab = [];
+  lesson.reviewUnits.forEach(unitId => {
+    const unit = LESSONS.find(l => l.id === unitId);
+    if (unit && unit.vocabulary) {
+      allVocab.push(...unit.vocabulary);
+    }
+  });
+  return allVocab;
+};
+
+const getRandomReviewVocabulary = (lesson, count = 10) => {
+  const allVocab = getReviewVocabulary(lesson);
+  const shuffled = [...allVocab].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, Math.min(count, shuffled.length));
 };
 </script>
 
@@ -8882,7 +8932,7 @@ const CreateProfileScreen = ({ slotId, onSave, onCancel }) => {
 };
 
 // ==================== HOME SCREEN ====================
-const HomeScreen = ({ onStartLesson, profile, onChangeProfile, onOpenMap }) => {
+const HomeScreen = ({ onStartLesson, profile, onChangeProfile, onOpenMap, onOpenTrophies }) => {
   const isLessonUnlocked = (lesson) => {
     if (!lesson.requiredLesson) return true;
     return profile.lessonsCompleted.includes(lesson.requiredLesson);
@@ -9005,7 +9055,7 @@ const HomeScreen = ({ onStartLesson, profile, onChangeProfile, onOpenMap }) => {
       {/* All Lessons Button */}
       <button
         onClick={onOpenMap}
-        className="w-full bg-white rounded-2xl p-4 shadow-lg mb-5 flex items-center justify-between hover:shadow-xl transition-all"
+        className="w-full bg-white rounded-2xl p-4 shadow-lg mb-3 flex items-center justify-between hover:shadow-xl transition-all"
       >
         <div className="flex items-center gap-3">
           <span className="text-2xl">🗺️</span>
@@ -9015,6 +9065,23 @@ const HomeScreen = ({ onStartLesson, profile, onChangeProfile, onOpenMap }) => {
           </div>
         </div>
         <span className="text-gray-400 text-xl">→</span>
+      </button>
+
+      {/* Trophy Room Button */}
+      <button
+        onClick={onOpenTrophies}
+        className="w-full bg-gradient-to-r from-yellow-100 to-amber-100 rounded-2xl p-4 shadow-lg mb-5 flex items-center justify-between hover:shadow-xl transition-all border-2 border-yellow-300"
+      >
+        <div className="flex items-center gap-3">
+          <span className="text-2xl">🏆</span>
+          <div className="text-left">
+            <div className="font-bold text-yellow-800">Trophy Room</div>
+            <div className="text-sm text-yellow-600">
+              {profile.rewards?.length || 0} / {Object.keys(REVIEW_REWARDS).length} trophies
+            </div>
+          </div>
+        </div>
+        <span className="text-yellow-500 text-xl">→</span>
       </button>
 
       {/* Recent Lessons with Scores */}
@@ -9062,6 +9129,105 @@ const HomeScreen = ({ onStartLesson, profile, onChangeProfile, onOpenMap }) => {
           </div>
         </div>
       </div>
+    </div>
+  );
+};
+
+// ==================== TROPHY ROOM SCREEN ====================
+const TrophyRoom = ({ profile, onBack }) => {
+  const earnedRewards = profile.rewards || [];
+  const allRewardIds = Object.keys(REVIEW_REWARDS);
+  
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-yellow-400 via-amber-400 to-orange-500 p-4">
+      {/* Header */}
+      <div className="flex items-center gap-4 mb-6">
+        <button 
+          onClick={onBack}
+          className="bg-white/20 hover:bg-white/30 text-white rounded-full p-2"
+        >
+          ←
+        </button>
+        <div className="flex-1 text-center">
+          <h1 className="text-2xl font-bold text-white">🏆 Trophy Room</h1>
+          <p className="text-yellow-100 text-sm">
+            {earnedRewards.length} / {allRewardIds.length} Collected
+          </p>
+        </div>
+        <div className="w-10"></div>
+      </div>
+      
+      {/* Trophy Progress */}
+      <div className="bg-white/20 rounded-full h-4 mb-6 overflow-hidden">
+        <div 
+          className="bg-white h-full transition-all duration-500"
+          style={{ width: `${(earnedRewards.length / allRewardIds.length) * 100}%` }}
+        />
+      </div>
+      
+      {/* Earned Trophies */}
+      {earnedRewards.length > 0 && (
+        <div className="mb-6">
+          <h2 className="text-white font-bold text-lg mb-3">✨ Your Trophies</h2>
+          <div className="grid grid-cols-2 gap-3">
+            {earnedRewards.map((rewardId) => {
+              const reward = REVIEW_REWARDS[rewardId];
+              if (!reward) return null;
+              const colors = RARITY_COLORS[reward.rarity];
+              return (
+                <div 
+                  key={rewardId}
+                  className={`${colors.bg} ${colors.border} border-4 rounded-2xl p-4 text-center shadow-lg ${colors.glow}`}
+                >
+                  <div className="text-4xl mb-2">{reward.emoji}</div>
+                  <div className={`font-bold ${colors.text}`}>{reward.name}</div>
+                  <div className="text-xs text-gray-500 mt-1">{reward.description}</div>
+                  <div className={`text-xs mt-2 font-semibold uppercase ${colors.text}`}>
+                    {reward.rarity}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+      
+      {/* Locked Trophies */}
+      <div>
+        <h2 className="text-white/80 font-bold text-lg mb-3">🔒 Locked Trophies</h2>
+        <div className="grid grid-cols-3 gap-3">
+          {allRewardIds.filter(id => !earnedRewards.includes(id)).map((rewardId) => {
+            const reward = REVIEW_REWARDS[rewardId];
+            return (
+              <div 
+                key={rewardId}
+                className="bg-gray-800/30 border-2 border-gray-600/30 rounded-2xl p-3 text-center"
+              >
+                <div className="text-3xl mb-1 grayscale opacity-30">🔒</div>
+                <div className="text-white/50 text-xs font-semibold">???</div>
+                <div className="text-white/30 text-xs mt-1">Pass a review to unlock!</div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+      
+      {/* Motivation message */}
+      {earnedRewards.length === 0 && (
+        <div className="mt-8 bg-white/20 rounded-2xl p-6 text-center">
+          <div className="text-4xl mb-3">🎯</div>
+          <div className="text-white font-bold text-lg">No trophies yet!</div>
+          <div className="text-yellow-100 mt-2">Complete review quizzes to earn awesome trophies!</div>
+        </div>
+      )}
+      
+      {earnedRewards.length === allRewardIds.length && (
+        <div className="mt-6 bg-gradient-to-r from-yellow-300 to-amber-300 rounded-2xl p-6 text-center border-4 border-yellow-500 shadow-2xl">
+          <div className="text-5xl mb-3">👑</div>
+          <div className="text-yellow-800 font-bold text-xl">LEGENDARY COLLECTOR!</div>
+          <div className="text-yellow-700 mt-2">You've earned ALL trophies! ¡Eres increíble!</div>
+        </div>
+      )}
     </div>
   );
 };
@@ -9866,6 +10032,12 @@ function SpanishLearningApp() {
     const profile = currentProfile;
     const isFirstCompletion = !profile.lessonsCompleted.includes(currentLesson.id);
     
+    // Check if this is a review lesson and award trophy
+    let newRewards = profile.rewards || [];
+    if (currentLesson.isReview && REVIEW_REWARDS[currentLesson.id] && !newRewards.includes(currentLesson.id)) {
+      newRewards = [...newRewards, currentLesson.id];
+    }
+    
     const updatedProfile = {
       ...profile,
       totalXP: profile.totalXP + (isFirstCompletion ? totalXP : Math.floor(totalXP / 2)), // Half XP for replays
@@ -9876,6 +10048,7 @@ function SpanishLearningApp() {
         ...profile.lessonScores,
         [currentLesson.id]: scoreData,
       },
+      rewards: newRewards,
       lastPlayedDate: new Date().toISOString(),
     };
     
@@ -9932,6 +10105,13 @@ function SpanishLearningApp() {
           profile={currentProfile}
           onChangeProfile={handleChangeProfile}
           onOpenMap={handleOpenMap}
+          onOpenTrophies={() => setScreen('trophies')}
+        />
+      )}
+      {screen === 'trophies' && currentProfile && (
+        <TrophyRoom
+          profile={currentProfile}
+          onBack={handleGoHome}
         />
       )}
       {screen === 'map' && currentProfile && (
